@@ -1,5 +1,6 @@
 import Component from '@ember/component';
 import { select } from 'd3-selection';
+import { scaleLinear, scaleBand } from 'd3-scale';
 
 export default Component.extend({
   
@@ -12,22 +13,24 @@ export default Component.extend({
   ],
 
   didInsertElement() {
+    let authorCounts = this.get('authors').map(author => author.count);
+    let yScale = scaleLinear()
+      .domain([ 0, Math.max(...authorCounts) ])
+      .range([ 0, 150 ]);
+
+    let xScale = scaleBand()
+      .domain(this.get('authors').map(author => author.name))
+      .range([ 0, 300 ])
+      .paddingInner(0.12);
+
     let svg = select(this.$('svg')[0]);
-
-    // svg.append('rect')
-    //   .attr('width', 20)
-    //   .attr('height', 100);
-
-    // svg.append('rect')
-    //   .attr('width', 20)
-    //   .attr('height', 50)
-    //   .attr('x', 25);
 
     svg.selectAll('rect').data(this.get('authors'))
       .enter()
       .append('rect')
-      .attr('width', 20)
-      .attr('height', author => author.count)
-      .attr('x', (author, index) => 25 * index);
+      .attr('width', xScale.bandwidth())
+      .attr('height', author => yScale(author.count))
+      .attr('x', author => xScale(author.name))
+      .attr('y', author => 150 - yScale(author.count));
   }
 });
